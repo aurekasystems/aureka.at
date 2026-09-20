@@ -1,0 +1,17 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.netrc
+_netrc
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Runtime / temporary files
+__pycache__/
+*.py[cod]
+*.log
