@@ -1,0 +1,27 @@
+name: aureka-website
+
+services:
+  website:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ./public
+        target: /srv/site
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./deploy/Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
