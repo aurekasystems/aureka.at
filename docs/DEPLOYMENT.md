@@ -170,7 +170,7 @@ dem nächsten Lauf in `list-timers`.
 Beobachten:
 
 ```bash
-journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed|manual step|fatal|error'
+sudo journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed|manual step|fatal|error'
 ```
 
 - `deployed <alt>..<neu>`: neuer Stand ist online.
