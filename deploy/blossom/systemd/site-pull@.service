@@ -1,0 +1,32 @@
+# Fast-forwards the checkout /srv/sites/<instance> to its upstream branch.
+# Installed as /etc/systemd/system/site-pull@.service (copied, not linked:
+# a push to the repository must never change what runs here).
+# Instance name = directory below /srv/sites, e.g. site-pull@aureka.at.
+
+[Unit]
+Description=Pull site %i from its Git upstream
+Documentation=https://github.com/aurekasystems/aureka.at/blob/main/docs/DEPLOYMENT.md
+Wants=network-online.target
+After=network-online.target
+ConditionPathIsDirectory=/srv/sites/%i/.git
+
+[Service]
+Type=oneshot
+User=mjs
+Group=mjs
+WorkingDirectory=/srv/sites/%i
+# Logs the deployed range and lists changes that need a manual step
+# (compose files and deploy/ are not applied by a pull).
+ExecStart=/bin/sh -c 'old=$$(git rev-parse HEAD) && git pull --ff-only --quiet && new=$$(git rev-parse HEAD) && if [ "$$old" != "$$new" ]; then echo "deployed $$old..$$new"; git diff --name-only "$$old" "$$new" -- "compose*.yaml" deploy | sed "s/^/manual step needed: /"; fi'
+TimeoutStartSec=2min
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/srv/sites/%i
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
