@@ -1,51 +1,51 @@
-# Bereitstellung auf Blossom
+# Deployment on Blossom
 
-Die Website läuft auf Blossom als eigenes Compose-Projekt unter `/srv/sites/`
-(eigene Seiten; Kundenseiten liegen unter `/srv/clients/`), nach demselben Muster
-wie die anderen Seiten hinter dem gemeinsamen Proxy. Ein schlanker Caddy-Container liefert
-ausschließlich `public/` über internes HTTP aus. Der gemeinsame Proxy
-(`aureka-proxy-caddy`) übernimmt HTTPS und leitet über das Docker-Netzwerk
-`edge` weiter.
+The website runs on Blossom as its own Compose project below `/srv/sites/`
+(own sites; client sites live below `/srv/clients/`), following the same
+pattern as the other sites behind the shared proxy. A slim Caddy container serves only
+`public/` over internal HTTP. The shared proxy (`aureka-proxy-caddy`)
+terminates HTTPS and forwards over the Docker network `edge`.
 
-> Blossom ist laut `aurekasystems/infrastructure` eine Preview-/Staging-Plattform
-> ohne Produktivgarantie. `aureka.at` läuft seit dem 25.11.2026 trotzdem dort.
+> According to `aurekasystems/infrastructure`, Blossom is a preview/staging
+> platform without production guarantees. `aureka.at` has been running there
+> since 2026-11-25 as a temporary home; see [Moving off Blossom](#moving-off-blossom).
 
-## Stabile Bezeichnungen
+## Stable names
 
-| Bestandteil | Wert |
+| Component | Value |
 | --- | --- |
 | Repository | `aurekasystems/aureka.at` |
-| Server-Checkout | `/srv/sites/aureka.at/` |
-| Compose-Projekt | `aureka-website` |
+| Server checkout | `/srv/sites/aureka.at/` |
+| Compose project | `aureka-website` |
 | Service | `website` |
-| Alias im Netzwerk `edge` | `aureka-website` |
-| Domains | `aureka.at` (Hauptdomain), `www.aureka.at` → Weiterleitung |
+| Alias on network `edge` | `aureka-website` |
+| Domains | `aureka.at` (primary), `www.aureka.at` → redirect |
 
-## Dateien
+## Files
 
-- `compose.yaml`: Website-Stack mit `caddy:2.11.4-alpine`, schreibgeschützten
-  Mounts für `public/` und `deploy/Caddyfile`, Healthcheck. Kein Host-Port.
-- `compose.override.yaml`: Blossom-Ergänzung, externes Netzwerk `edge` und Alias.
-- `deploy/Caddyfile`: interner Dateiserver auf Port 80 mit Sicherheits-Headern;
-  `/impressum` liefert auch `impressum.html`.
-- `deploy/blossom/aureka-website.caddy`: Route für den gemeinsamen Proxy. Die
-  installierte Proxy-Konfiguration gehört nachvollziehbar in
+- `compose.yaml`: website stack with `caddy:2.11.4-alpine`, read-only mounts
+  for `public/` and `deploy/Caddyfile`, healthcheck. No host port.
+- `compose.override.yaml`: Blossom additions, external network `edge` and alias.
+- `deploy/Caddyfile`: internal file server on port 80 with security headers;
+  `/impressum` also serves `impressum.html`.
+- `deploy/blossom/aureka-website.caddy`: route for the shared proxy. Because
+  the site is on Blossom only temporarily, it is deliberately not tracked in
   `aurekasystems/infrastructure`.
-- `deploy/blossom/systemd/site-pull@.service`, `site-pull@.timer`: holen `main`
-  jede Minute auf Blossom (Abschnitt 6).
+- `deploy/blossom/systemd/site-pull@.service`, `site-pull@.timer`: pull `main`
+  on Blossom every minute (section 6).
 
-Basis- und Override-Datei werden bei allen Befehlen gemeinsam angegeben.
+Always pass the base and override files together.
 
-## 1. Vor dem ersten Deployment
+## 1. Before the first deployment
 
-- Alle Platzhalter `[…]` in `public/impressum.html` ersetzen. Prüfen:
-  `grep -n '\[' public/impressum.html` darf nichts mehr liefern.
-- Änderungen committen und nach `main` pushen.
+- Replace all `[…]` placeholders in `public/impressum.html`. Check:
+  `grep -n '\[' public/impressum.html` must print nothing.
+- Commit the changes and push them to `main`.
 
-## 2. Checkout auf Blossom (als `mjs`)
+## 2. Checkout on Blossom (as `mjs`)
 
-Das Repository ist öffentlich; Blossom klont es über HTTPS, ohne Schlüssel auf
-dem Server:
+The repository is public; Blossom clones it over HTTPS, with no key on the
+server:
 
 ```bash
 git ls-remote https://github.com/aurekasystems/aureka.at.git HEAD
@@ -55,7 +55,7 @@ git clone https://github.com/aurekasystems/aureka.at.git /srv/sites/aureka.at
 cd /srv/sites/aureka.at
 ```
 
-## 3. Website-Stack prüfen und starten
+## 3. Check and start the website stack
 
 ```bash
 cd /srv/sites/aureka.at
@@ -67,11 +67,11 @@ sudo docker compose -f compose.yaml -f compose.override.yaml up -d
 sudo docker compose -f compose.yaml -f compose.override.yaml ps
 ```
 
-## 4. Route im gemeinsamen Proxy
+## 4. Route in the shared proxy
 
-Die Haupt-Caddyfile (`/srv/proxy/caddy/app/Caddyfile`) importiert
-`/config/sites-enabled/*.caddy`. Die Route zuerst in einer Prüfkopie
-validieren; der laufende Proxy bleibt dabei unberührt.
+The main Caddyfile (`/srv/proxy/caddy/app/Caddyfile`) imports
+`/config/sites-enabled/*.caddy`. Validate the route in a check copy first;
+the running proxy is not touched.
 
 ```bash
 C=/srv/proxy/caddy/data/config
@@ -82,8 +82,8 @@ sudo cp deploy/blossom/aureka-website.caddy $C/aureka-website-check/
 sudo docker exec aureka-proxy-caddy-caddy-1 caddy validate --config /config/Caddyfile.aureka-website-check --adapter caddyfile
 ```
 
-Aktivieren, mit Sicherung von `sites-enabled`. Erst nach erfolgreicher
-Validierung neu laden:
+Activate it, with a backup of `sites-enabled`. Reload only after a successful
+validation:
 
 ```bash
 sudo cp -a $C/sites-enabled $C/backups/sites-enabled-$(date +%Y%m%d-%H%M%S)
@@ -92,37 +92,38 @@ sudo docker exec aureka-proxy-caddy-caddy-1 caddy validate --config /etc/caddy/C
 sudo docker exec aureka-proxy-caddy-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
-Danach prüfen, dass die übrigen Seiten weiter antworten (Photos: 200,
-andere Hosts: wie gewohnt):
+Then check that the other sites still respond (Photos: 200,
+other hosts: as usual), and remove the check copy:
 
 ```bash
 for h in <other hosts>; do echo "$h: $(curl -s -o /dev/null -w '%{http_code}' https://$h/)"; done
+sudo rm -r $C/aureka-website-check $C/Caddyfile.aureka-website-check
 ```
 
-## 5. DNS und Prüfung
+## 5. DNS and verification
 
-Bei Infomaniak (TTL vorher auf 300 senken) setzen; MX und Mail-Einträge
-unverändert lassen:
+Set at Infomaniak (lower the TTL to 300 beforehand); leave MX and mail
+records unchanged:
 
-| Name | Typ | Wert |
+| Name | Type | Value |
 | --- | --- | --- |
 | `aureka.at` | A | `179.237.76.73` |
 | `aureka.at` | AAAA | `2001:1600:16:10::acf` |
 | `www.aureka.at` | A | `179.237.76.73` |
 | `www.aureka.at` | AAAA | `2001:1600:16:10::acf` |
 
-Adressen von Blossom: `ip -br addr show enp3s0`. Auf Blossom ist `dig` nicht
-installiert; Auflösung mit `getent ahosts aureka.at` prüfen.
+Blossom's addresses: `ip -br addr show enp3s0`. `dig` is not installed on
+Blossom; check resolution with `getent ahosts aureka.at`.
 
-Zertifikate verfolgen, bis für beide Namen `certificate obtained successfully`
-erscheint:
+Follow the certificate issuance until `certificate obtained successfully`
+appears for both names:
 
 ```bash
 sudo docker logs -f --since 2m aureka-proxy-caddy-caddy-1 2>&1 | grep -iE 'aureka\.at|obtain|error'
 ```
 
-Hängt die Ausstellung nach dem DNS-Wechsel, mit `caddy reload … --force`
-neu anstoßen. Danach:
+If issuance stalls after the DNS change, retrigger it with
+`caddy reload … --force`. Then:
 
 ```bash
 curl -I http://aureka.at/
@@ -132,82 +133,98 @@ curl -I https://aureka.at/impressum
 curl -I https://aureka.at/assets/style.css
 ```
 
-Erwartet: HTTP → HTTPS (308), `www` → `https://aureka.at/` (301), sonst HTTP 200.
+Expected: HTTP → HTTPS (308), `www` → `https://aureka.at/` (301), otherwise
+HTTP 200.
 
-Rollback des Umzugs: `sites-enabled/aureka-website.caddy` entfernen, Proxy
-validieren und neu laden, DNS auf die alten Infomaniak-Werte zurücksetzen.
+Rolling back the move: remove `sites-enabled/aureka-website.caddy`, validate
+and reload the proxy, and restore the previous Infomaniak DNS values.
 
-## 6. Automatisches Aktualisieren (Pull-Timer)
+## 6. Automatic updates (pull timer)
 
-Blossom holt `main` selbst: Der Timer `site-pull@aureka.at.timer` führt jede
-Minute als `mjs` ein `git pull --ff-only` in `/srv/sites/aureka.at` aus. Da der
-Container `public/` direkt aus dem Checkout liest, ist ein Push auf `main`
-spätestens nach etwa einer Minute online. GitHub braucht dafür weder Zugang
-zum Server noch Secrets.
+Blossom pulls `main` itself: the timer `site-pull@aureka.at.timer` runs
+`git pull --ff-only` in `/srv/sites/aureka.at` as `mjs` every minute. Since the
+container serves `public/` straight from the checkout, a push to `main` is live
+after about a minute. GitHub needs neither access to the server nor secrets.
 
-Die Units in `deploy/blossom/systemd/` sind Templates; die Instanz ist der
-Ordnername unter `/srv/sites/`. Weitere Seiten (z. B. der Blog) nutzen dieselben
-installierten Units mit eigener Instanz. Die Dateien werden **kopiert**, nicht
-verlinkt, damit ein Push nie ändert, was auf dem Server ausgeführt wird.
+The units in `deploy/blossom/systemd/` are templates; the instance is the
+directory name below `/srv/sites/`. Further sites (e.g. the blog) use the same
+installed units with their own instance. The files are **copied**, not linked,
+so that a push can never change what runs on the server.
 
-Einmalig installieren:
+Install once:
 
 ```bash
 cd /srv/sites/aureka.at
-git status --short   # muss leer sein
+git status --short   # must be empty
 sudo install -m 644 deploy/blossom/systemd/site-pull@.service deploy/blossom/systemd/site-pull@.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemd-analyze verify site-pull@aureka.at.service site-pull@aureka.at.timer
 sudo systemctl start site-pull@aureka.at.service
-systemctl status site-pull@aureka.at.service --no-pager
+systemctl show site-pull@aureka.at.service -p Result -p ExecMainStatus
 sudo systemctl enable --now site-pull@aureka.at.timer
 systemctl list-timers 'site-pull@*' --no-pager
 ```
 
-Erwartet: Der Service endet mit `status=0/SUCCESS`, der Timer erscheint mit
-dem nächsten Lauf in `list-timers`.
+Expected: `Result=success` and `ExecMainStatus=0`; the timer is listed with
+its next run.
 
-Beobachten:
+Monitor (`mjs` can read the system journal only with `sudo`):
 
 ```bash
 sudo journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed|manual step|fatal|error'
 ```
 
-- `deployed <alt>..<neu>`: neuer Stand ist online.
-- `manual step needed: <Datei>`: Compose-Dateien oder `deploy/` haben sich
-  geändert. Ein Pull wendet das nicht an; siehe unten.
-- `fatal: Not possible to fast-forward`: Im Checkout auf Blossom gibt es lokale
-  Commits oder Änderungen. Nichts wird überschrieben; Ursache klären
-  (`git status`, `git log origin/main..`) und den Checkout bereinigen.
+- `deployed <old>..<new>`: the new revision is live.
+- `manual step needed: <file>`: Compose files or `deploy/` changed. A pull
+  does not apply these; see below.
+- `fatal: Not possible to fast-forward`: the checkout on Blossom has local
+  commits or changes. Nothing is overwritten; find the cause
+  (`git status`, `git log origin/main..`) and clean up the checkout.
 
-Nach Änderungen an den Units in `deploy/blossom/systemd/` die Installation
-wiederholen (`install`, `daemon-reload`).
+After changing the units in `deploy/blossom/systemd/`, repeat the
+installation (`install`, `daemon-reload`).
 
-## Manuelle Schritte und Rollback
+## Manual steps and rollback
 
-Nach `manual step needed` für `compose*.yaml` oder `deploy/Caddyfile`:
+After `manual step needed` for `compose*.yaml` or `deploy/Caddyfile`:
 
 ```bash
 cd /srv/sites/aureka.at
 sudo docker compose -f compose.yaml -f compose.override.yaml up -d --force-recreate website
 ```
 
-(Die Admin-API des Website-Caddy ist deaktiviert, daher Neuerstellen statt
-Reload.) Für `deploy/blossom/aureka-website.caddy` Abschnitt 4 wiederholen.
+(The website Caddy's admin API is disabled, hence recreate instead of
+reload.) For `deploy/blossom/aureka-website.caddy`, repeat section 4.
 
-Rollback bevorzugt über Git: auf `main` mit `git revert` zurücknehmen und
-pushen; der Timer übernimmt den Stand. Muss es auf dem Server schneller gehen,
-zuerst den Timer anhalten, sonst schlägt jeder Lauf fehl:
+Prefer rolling back through Git: `git revert` on `main` and push; the timer
+picks it up. If it has to be faster on the server, stop the timer first,
+otherwise every run fails:
 
 ```bash
 sudo systemctl stop site-pull@aureka.at.timer
 cd /srv/sites/aureka.at && git switch --detach <COMMIT>
-# zurück:
+# back to normal:
 git switch main && git pull --ff-only && sudo systemctl start site-pull@aureka.at.timer
 ```
 
-## Früheres FTP-Deployment
+## Moving off Blossom
 
-Bis zum Umzug am 25.11.2026 lud ein GitHub-Workflow `public/` per FTP auf den
-Infomaniak-Webspace. Workflow und Skript sind entfernt; die Secrets `FTP_*` im
-Repository und der alte Webspace werden nicht mehr gebraucht.
+Once `aureka.at` runs elsewhere and DNS points there:
+
+```bash
+C=/srv/proxy/caddy/data/config
+sudo rm $C/sites-enabled/aureka-website.caddy
+sudo docker exec aureka-proxy-caddy-caddy-1 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+sudo docker exec aureka-proxy-caddy-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+sudo systemctl disable --now site-pull@aureka.at.timer
+cd /srv/sites/aureka.at && sudo docker compose -f compose.yaml -f compose.override.yaml down
+```
+
+Then remove `/srv/sites/aureka.at`. Keep the `site-pull@` template units
+while other sites below `/srv/sites/` use them.
+
+## Former FTP deployment
+
+Until the move on 2026-11-25, a GitHub workflow uploaded `public/` via FTP to
+the Infomaniak webspace. The workflow and script have been removed; the
+`FTP_*` repository secrets and the old webspace are no longer needed.

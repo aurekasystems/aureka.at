@@ -1,25 +1,28 @@
 # Aureka Systems
 
-Kleine deutschsprachige Startseite mit HTML und CSS.
-Vorerst kein Framework, Build, JavaScript, externen Fonts oder Laufzeit-Abhängigkeiten.
+Small German-language landing page built with plain HTML and CSS.
+For now: no framework, build step, JavaScript, external fonts or runtime
+dependencies.
 
-## Struktur
-- public/: ausschließlich veröffentlichte Website-Dateien
-- compose.yaml, compose.override.yaml, deploy/: Betrieb auf Blossom
-  (siehe [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md))
+## Structure
+- `public/`: published website files only
+- `compose.yaml`, `compose.override.yaml`, `deploy/`: operation on Blossom
+  (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md))
 
-## Lokal ansehen
-public/index.html im Browser öffnen. Alternativ mit installiertem Python:
+## Local preview
+Open `public/index.html` in a browser, or with Python installed:
 `python -m http.server 8000 --directory public`
-Dann http://localhost:8000 öffnen.
+and open http://localhost:8000.
 
-## Betrieb
-Die Website läuft auf Blossom (`/srv/sites/aureka.at`) hinter dem gemeinsamen
-Caddy-Proxy. Einrichtung, Aktualisierung und Rollback stehen in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Ein Push auf `main` ist nach etwa
-einer Minute online: Ein systemd-Timer auf Blossom holt den Stand selbst.
+## Operation
+The website runs on Blossom (`/srv/sites/aureka.at`) behind the shared Caddy
+proxy. Setup, updates and rollback are described in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). A push to `main` is live after about
+a minute: a systemd timer on Blossom pulls it.
 
-## Hinweise
-Die AS-Buchstaben sind ein vorläufiges Textzeichen. Das Impressum liegt in
-public/impressum.html; die E-Mail-Adresse ist dort als HTML-Entities kodiert.
-Eine Datenschutzerklärung fehlt noch.
+## Notes
+- The site content is German. An English version (EN/DE) is planned.
+- The "AS" letters are a provisional text mark.
+- The legal notice lives in `public/impressum.html`; its email address is
+  encoded as HTML entities.
+- A privacy policy is still missing.
