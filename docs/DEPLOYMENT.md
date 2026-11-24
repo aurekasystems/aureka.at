@@ -155,9 +155,8 @@ sudo docker compose -f compose.yaml -f compose.override.yaml up -d --force-recre
 Rollback: `git switch --detach <COMMIT>` und denselben Befehl ausführen;
 zurück mit `git switch main && git pull --ff-only`.
 
-## FTP-Deployment (Infomaniak)
+## Früheres FTP-Deployment
 
-Seit dem DNS-Umzug ist das FTP-Deployment überflüssig. Der Workflow
-`.github/workflows/deploy.yml` lädt aber weiterhin bei jedem Push auf `main`
-auf den alten Webspace hoch, bis er zusammen mit `scripts/deploy_ftp.py`
-entfernt wird.
+Bis zum Umzug am 25.11.2026 lud ein GitHub-Workflow `public/` per FTP auf den
+Infomaniak-Webspace. Workflow und Skript sind entfernt; die Secrets `FTP_*` im
+Repository und der alte Webspace werden nicht mehr gebraucht.
