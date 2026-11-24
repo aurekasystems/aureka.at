@@ -16,8 +16,8 @@ Dann http://localhost:8000 öffnen.
 ## Betrieb
 Die Website läuft auf Blossom (`/srv/sites/aureka.at`) hinter dem gemeinsamen
 Caddy-Proxy. Einrichtung, Aktualisierung und Rollback stehen in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Ein Push auf `main` veröffentlicht
-nichts automatisch; auf Blossom `git pull --ff-only` ausführen.
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Ein Push auf `main` ist nach etwa
+einer Minute online: Ein systemd-Timer auf Blossom holt den Stand selbst.
 
 ## Hinweise
 Die AS-Buchstaben sind ein vorläufiges Textzeichen. Das Impressum liegt in

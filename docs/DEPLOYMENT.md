@@ -31,6 +31,8 @@ ausschließlich `public/` über internes HTTP aus. Der gemeinsame Proxy
 - `deploy/blossom/aureka-website.caddy`: Route für den gemeinsamen Proxy. Die
   installierte Proxy-Konfiguration gehört nachvollziehbar in
   `aurekasystems/infrastructure`.
+- `deploy/blossom/systemd/site-pull@.service`, `site-pull@.timer`: holen `main`
+  jede Minute auf Blossom (Abschnitt 6).
 
 Basis- und Override-Datei werden bei allen Befehlen gemeinsam angegeben.
 
@@ -135,25 +137,74 @@ Erwartet: HTTP → HTTPS (308), `www` → `https://aureka.at/` (301), sonst HTTP
 Rollback des Umzugs: `sites-enabled/aureka-website.caddy` entfernen, Proxy
 validieren und neu laden, DNS auf die alten Infomaniak-Werte zurücksetzen.
 
-## Aktualisieren und zurückrollen
+## 6. Automatisches Aktualisieren (Pull-Timer)
+
+Blossom holt `main` selbst: Der Timer `site-pull@aureka.at.timer` führt jede
+Minute als `mjs` ein `git pull --ff-only` in `/srv/sites/aureka.at` aus. Da der
+Container `public/` direkt aus dem Checkout liest, ist ein Push auf `main`
+spätestens nach etwa einer Minute online. GitHub braucht dafür weder Zugang
+zum Server noch Secrets.
+
+Die Units in `deploy/blossom/systemd/` sind Templates; die Instanz ist der
+Ordnername unter `/srv/sites/`. Weitere Seiten (z. B. der Blog) nutzen dieselben
+installierten Units mit eigener Instanz. Die Dateien werden **kopiert**, nicht
+verlinkt, damit ein Push nie ändert, was auf dem Server ausgeführt wird.
+
+Einmalig installieren:
 
 ```bash
 cd /srv/sites/aureka.at
-git status --short
-git rev-parse HEAD   # für Rollback notieren
-git pull --ff-only
-sudo docker compose -f compose.yaml -f compose.override.yaml up -d
+git status --short   # muss leer sein
+sudo install -m 644 deploy/blossom/systemd/site-pull@.service deploy/blossom/systemd/site-pull@.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemd-analyze verify site-pull@aureka.at.service site-pull@aureka.at.timer
+sudo systemctl start site-pull@aureka.at.service
+systemctl status site-pull@aureka.at.service --no-pager
+sudo systemctl enable --now site-pull@aureka.at.timer
+systemctl list-timers 'site-pull@*' --no-pager
 ```
 
-Änderungen in `public/` sind sofort sichtbar. Nach Änderungen an
-`deploy/Caddyfile` den Service neu erstellen (Admin-API ist deaktiviert):
+Erwartet: Der Service endet mit `status=0/SUCCESS`, der Timer erscheint mit
+dem nächsten Lauf in `list-timers`.
+
+Beobachten:
 
 ```bash
+journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed|manual step|fatal|error'
+```
+
+- `deployed <alt>..<neu>`: neuer Stand ist online.
+- `manual step needed: <Datei>`: Compose-Dateien oder `deploy/` haben sich
+  geändert. Ein Pull wendet das nicht an; siehe unten.
+- `fatal: Not possible to fast-forward`: Im Checkout auf Blossom gibt es lokale
+  Commits oder Änderungen. Nichts wird überschrieben; Ursache klären
+  (`git status`, `git log origin/main..`) und den Checkout bereinigen.
+
+Nach Änderungen an den Units in `deploy/blossom/systemd/` die Installation
+wiederholen (`install`, `daemon-reload`).
+
+## Manuelle Schritte und Rollback
+
+Nach `manual step needed` für `compose*.yaml` oder `deploy/Caddyfile`:
+
+```bash
+cd /srv/sites/aureka.at
 sudo docker compose -f compose.yaml -f compose.override.yaml up -d --force-recreate website
 ```
 
-Rollback: `git switch --detach <COMMIT>` und denselben Befehl ausführen;
-zurück mit `git switch main && git pull --ff-only`.
+(Die Admin-API des Website-Caddy ist deaktiviert, daher Neuerstellen statt
+Reload.) Für `deploy/blossom/aureka-website.caddy` Abschnitt 4 wiederholen.
+
+Rollback bevorzugt über Git: auf `main` mit `git revert` zurücknehmen und
+pushen; der Timer übernimmt den Stand. Muss es auf dem Server schneller gehen,
+zuerst den Timer anhalten, sonst schlägt jeder Lauf fehl:
+
+```bash
+sudo systemctl stop site-pull@aureka.at.timer
+cd /srv/sites/aureka.at && git switch --detach <COMMIT>
+# zurück:
+git switch main && git pull --ff-only && sudo systemctl start site-pull@aureka.at.timer
+```
 
 ## Früheres FTP-Deployment
 
