@@ -1,22 +1,22 @@
 {
-    admin off
-    persist_config off
+	admin off
+	persist_config off
 }
 
 # Internal HTTP only. The shared Blossom proxy terminates public HTTPS.
 :80 {
-    root * /srv/site
-    encode zstd gzip
+	root * /srv/site
+	encode zstd gzip
 
-    header {
-        X-Content-Type-Options "nosniff"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Content-Security-Policy "default-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
-        Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        -Server
-    }
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
 
-    # /impressum also serves impressum.html
-    try_files {path} {path}.html
-    file_server
+	# /impressum also serves impressum.html
+	try_files {path} {path}.html
+	file_server
 }
