@@ -7,6 +7,8 @@ Vorerst kein Framework, Build, JavaScript, externen Fonts oder Laufzeit-Abhängi
 - public/: ausschließlich veröffentlichte Website-Dateien
 - .github/workflows/deploy.yml: Upload bei Push auf main
 - scripts/deploy_ftp.py: FTP-Upload mit der Python-Standardbibliothek
+- compose.yaml, compose.override.yaml, deploy/: Betrieb auf Blossom
+  (siehe [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md))
 
 ## Lokal ansehen
 public/index.html im Browser öffnen. Alternativ mit installiertem Python:
@@ -66,7 +68,8 @@ Gleichzeitige Uploads werden serialisiert.
 - Die Verbindung zum echten Webspace ist erst nach Einrichtung der Secrets
   überprüfbar. Nach dem ersten erfolgreichen Lauf die Website im Browser prüfen.
 
-Die AS-Buchstaben sind ein vorläufiges Textzeichen. Produktangebot, finale
-Markengestaltung und rechtliche Seiten sind noch nicht Bestandteil dieses Starts.
+Die AS-Buchstaben sind ein vorläufiges Textzeichen. Das Impressum liegt in
+public/impressum.html; die E-Mail-Adresse ist dort als HTML-Entities kodiert.
+Eine Datenschutzerklärung fehlt noch.
 
 Technische Referenz: https://docs.python.org/3/library/ftplib.html
