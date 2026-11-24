@@ -1,9 +1,9 @@
 # Shared Blossom proxy route for the Aureka Systems website.
 # Installed as /srv/proxy/caddy/data/config/sites-enabled/aureka-website.caddy
 aureka.at {
-    reverse_proxy aureka-website:80
+	reverse_proxy aureka-website:80
 }
 
 www.aureka.at {
-    redir https://aureka.at{uri} permanent
+	redir https://aureka.at{uri} permanent
 }
