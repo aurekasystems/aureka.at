@@ -1,0 +1,12 @@
+# Blossom-specific additions. Use together with compose.yaml.
+services:
+  website:
+    networks:
+      edge:
+        aliases:
+          - aureka-website
+
+networks:
+  edge:
+    external: true
+    name: edge
