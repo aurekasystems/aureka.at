@@ -42,13 +42,13 @@ Basis- und Override-Datei werden bei allen Befehlen gemeinsam angegeben.
 
 ## 2. Checkout auf Blossom (als `mjs`)
 
-Für das private Repository einen lesenden Deploy-Key bei GitHub hinterlegen und
-den Zugriff prüfen:
+Das Repository ist öffentlich; Blossom klont es über HTTPS, ohne Schlüssel auf
+dem Server:
 
 ```bash
-git ls-remote git@github.com:aurekasystems/aureka.at.git HEAD
+git ls-remote https://github.com/aurekasystems/aureka.at.git HEAD
 sudo install -d -o mjs -g mjs /srv/aureka
-git clone git@github.com:aurekasystems/aureka.at.git /srv/aureka/website
+git clone https://github.com/aurekasystems/aureka.at.git /srv/aureka/website
 cd /srv/aureka/website
 ```
 
