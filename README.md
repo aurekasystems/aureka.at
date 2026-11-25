@@ -26,3 +26,8 @@ a minute: a systemd timer on Blossom pulls it.
 - The legal notice lives in `public/impressum.html`; its email address is
   encoded as HTML entities.
 - A privacy policy is still missing.
+
+## Development
+This repository was built with the help of AI assistants. All changes are reviewed and
+committed by a human, who remains responsible for them. Commits carry no
+per-commit AI attribution.

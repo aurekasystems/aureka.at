@@ -92,8 +92,9 @@ sudo docker exec aureka-proxy-caddy-caddy-1 caddy validate --config /etc/caddy/C
 sudo docker exec aureka-proxy-caddy-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
-Then check that the other sites still respond (Photos: 200,
-other hosts: as usual), and remove the check copy:
+Then check that every other site behind the proxy still answers with its
+usual status code (list the hosts from the main Caddyfile and
+`sites-enabled/`), and remove the check copy:
 
 ```bash
 for h in <other hosts>; do echo "$h: $(curl -s -o /dev/null -w '%{http_code}' https://$h/)"; done
