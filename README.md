@@ -28,8 +28,6 @@ a minute: a systemd timer on Blossom pulls it.
 - A privacy policy is still missing.
 
 ## Development
-This repository was built with the help of AI assistants: ChatGPT and
-[Claude Code](https://claude.com/claude-code), the latter mainly for the
-Blossom deployment and its documentation. All changes are reviewed and
+This repository was built with the help of AI assistants. All changes are reviewed and
 committed by a human, who remains responsible for them. Commits carry no
 per-commit AI attribution.
