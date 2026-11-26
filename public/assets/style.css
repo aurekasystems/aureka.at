@@ -11,9 +11,8 @@ main { flex: 1 0 auto; }
 .header { min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 14px; font-size: 1.15rem; font-weight: 650; text-decoration: none; letter-spacing: -.035em; }
 .brand-light { font-weight: 400; }
-.brand-mark { display: inline-flex; font-size: 2.2rem; font-weight: 750; letter-spacing: -.2em; padding-right: .2em; line-height: 1; }
-.brand-mark span:first-child { color: #ef7472; }
-.brand-mark span:last-child { color: #6db7e8; mix-blend-mode: multiply; }
+.brand-mark { display: block; width: 40px; height: 40px; border-radius: 10px; box-shadow: 0 1px 2px #17324d1f, 0 4px 14px #17324d1a; }
+nav { display: flex; gap: 28px; }
 nav a { font-size: .9rem; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 .hero { position: relative; padding-block: clamp(72px, 10vw, 144px) 100px; }
@@ -31,6 +30,13 @@ h1 > span { color: #68618b; }
 .about .eyebrow { padding-top: 10px; }
 h2 { font-size: clamp(2rem, 3.5vw, 2.8rem); line-height: 1.2; letter-spacing: -.04em; font-weight: 550; margin: 0 0 24px; }
 .about p:not(.eyebrow) { max-width: 620px; color: var(--muted); }
+.products { border-top: 1px solid #17324d26; display: grid; grid-template-columns: 1fr 2fr; gap: 40px; padding-block: 64px 88px; }
+.products .eyebrow { padding-top: 10px; }
+.product { display: flex; justify-content: space-between; align-items: center; gap: 24px; max-width: 620px; padding: 24px 28px; border: 1px solid #17324d26; border-radius: 10px; background: #ffffff8c; text-decoration: none; transition: border-color .2s, background .2s; }
+.product:hover { border-color: #17324d59; background: #fff; }
+.product h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.02em; margin: 0 0 4px; }
+.product p { color: var(--muted); margin: 0; }
+.product-tag { font-size: .7rem; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; color: #68618b; white-space: nowrap; }
 .footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #17324d26; padding-block: 24px; color: var(--muted); font-size: .75rem; }
 .footer a { text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
@@ -49,11 +55,13 @@ h2 { font-size: clamp(2rem, 3.5vw, 2.8rem); line-height: 1.2; letter-spacing: -.
 .wrap { width: calc(100% - 40px); }
 .header { min-height: 88px; gap: 12px; }
 .brand { gap: 10px; font-size: 1rem; }
-.brand-mark { font-size: 1.9rem; }
+.brand-mark { width: 34px; height: 34px; border-radius: 8px; }
+nav { gap: 16px; }
 nav a { font-size: .8rem; }
 .hero { padding-block: 64px 72px; }
 .intro { font-size: 1rem; }
-.about { grid-template-columns: 1fr; gap: 8px; padding-block: 40px 56px; }
+.about, .products { grid-template-columns: 1fr; gap: 8px; padding-block: 40px 56px; }
+.product { flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px; }
 .footer { flex-direction: column; gap: 4px; }
 .legal-list { grid-template-columns: 1fr; gap: 0; }
 .legal-list dd { margin-bottom: 10px; }

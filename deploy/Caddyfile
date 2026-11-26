@@ -16,6 +16,9 @@
 		-Server
 	}
 
+	# Short form of the product URL
+	redir /products/photo /products/photos 301
+
 	# /impressum also serves impressum.html
 	try_files {path} {path}.html
 	file_server

@@ -22,7 +22,7 @@ a minute: a systemd timer on Blossom pulls it.
 
 ## Notes
 - The site content is German. An English version (EN/DE) is planned.
-- The "AS" letters are a provisional text mark.
+- The header logo and site icons are generated from the Aureka Systems v2 logo.
 - The legal notice lives in `public/impressum.html`; its email address is
   encoded as HTML entities.
 - A privacy policy is still missing.
