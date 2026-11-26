@@ -31,8 +31,10 @@ terminates HTTPS and forwards over the Docker network `edge`.
 - `deploy/blossom/aureka-website.caddy`: route for the shared proxy. Because
   the site is on Blossom only temporarily, it is deliberately not tracked in
   `aurekasystems/infrastructure`.
-- `deploy/blossom/systemd/site-pull@.service`, `site-pull@.timer`: pull `main`
-  on Blossom every minute (section 6).
+- `deploy/blossom/systemd/site-pull@.service`, `site-pull@.timer`: pull the
+  branch `release` on Blossom every minute (section 6).
+- `.github/workflows/release.yml`: publishes each GitHub release to the branch
+  `release` (section 6).
 
 Always pass the base and override files together.
 
@@ -140,12 +142,31 @@ HTTP 200.
 Rolling back the move: remove `sites-enabled/aureka-website.caddy`, validate
 and reload the proxy, and restore the previous Infomaniak DNS values.
 
-## 6. Automatic updates (pull timer)
+## 6. Releases and the pull timer
 
-Blossom pulls `main` itself: the timer `site-pull@aureka.at.timer` runs
-`git pull --ff-only` in `/srv/sites/aureka.at` as `mjs` every minute. Since the
-container serves `public/` straight from the checkout, a push to `main` is live
-after about a minute. GitHub needs neither access to the server nor secrets.
+Only published GitHub releases go live; merging to `main` does not deploy.
+
+1. Merge the changes to `main`.
+2. Publish a release on GitHub with a new tag on `main`, e.g. `v1.4.0`
+   (letters, digits, `.`, `_`, `-`). Pre-releases are not deployed.
+3. The workflow `Release` (`.github/workflows/release.yml`) commits the tagged
+   files to the branch `release`, with the tag filled in where the footer of
+   each page has `<!-- version -->`. Each release commit has the previous one
+   as a parent, so the branch only ever fast-forwards.
+4. Blossom pulls `release`: the timer `site-pull@aureka.at.timer` runs
+   `git pull --ff-only` in `/srv/sites/aureka.at` as `mjs` every minute. Since
+   the container serves `public/` straight from the checkout, the release is
+   live after about a minute. GitHub needs neither access to the server nor
+   secrets.
+
+The server checkout follows `release` once (after the first release exists):
+
+```bash
+cd /srv/sites/aureka.at
+git status --short   # must be empty
+git fetch origin && git switch release
+git status -sb       # ## release...origin/release
+```
 
 The units in `deploy/blossom/systemd/` are templates; the instance is the
 directory name below `/srv/sites/`. Further sites (e.g. the blog) use the same
@@ -180,7 +201,7 @@ sudo journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed
   does not apply these; see below.
 - `fatal: Not possible to fast-forward`: the checkout on Blossom has local
   commits or changes. Nothing is overwritten; find the cause
-  (`git status`, `git log origin/main..`) and clean up the checkout.
+  (`git status`, `git log origin/release..`) and clean up the checkout.
 
 After changing the units in `deploy/blossom/systemd/`, repeat the
 installation (`install`, `daemon-reload`).
@@ -197,15 +218,16 @@ sudo docker compose -f compose.yaml -f compose.override.yaml up -d --force-recre
 (The website Caddy's admin API is disabled, hence recreate instead of
 reload.) For `deploy/blossom/aureka-website.caddy`, repeat section 4.
 
-Prefer rolling back through Git: `git revert` on `main` and push; the timer
-picks it up. If it has to be faster on the server, stop the timer first,
+Prefer rolling back through a release: run the workflow `Release` manually
+(Actions → Release → Run workflow) with the tag of the last good release. It
+puts that release's files on top of `release`, and the timer picks them up. If it has to be faster on the server, stop the timer first,
 otherwise every run fails:
 
 ```bash
 sudo systemctl stop site-pull@aureka.at.timer
 cd /srv/sites/aureka.at && git switch --detach <COMMIT>
 # back to normal:
-git switch main && git pull --ff-only && sudo systemctl start site-pull@aureka.at.timer
+git switch release && git pull --ff-only && sudo systemctl start site-pull@aureka.at.timer
 ```
 
 ## Moving off Blossom
