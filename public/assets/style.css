@@ -33,6 +33,8 @@ h2 { font-size: clamp(2rem, 3.5vw, 2.8rem); line-height: 1.2; letter-spacing: -.
 .about p:not(.eyebrow) { max-width: 620px; color: var(--muted); }
 .footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #17324d26; padding-block: 24px; color: var(--muted); font-size: .75rem; }
 .footer a { text-decoration: none; }
+.version::before { content: "·"; margin-inline: .5em; }
+.version { opacity: .7; font-variant-numeric: tabular-nums; }
 .footer a:hover { text-decoration: underline; }
 .legal > * { max-width: 760px; }
 .legal { padding-block: clamp(48px, 7vw, 96px) 88px; }

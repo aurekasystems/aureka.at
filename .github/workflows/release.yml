@@ -1,0 +1,61 @@
+# Publishes a GitHub release to the `release` branch, which Blossom pulls
+# (docs/DEPLOYMENT.md, section 6). The branch holds the release's files with
+# the release tag filled into the footer of every page. Pushes to `main` are
+# no longer deployed.
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to deploy again (e.g. for a rollback)
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-branch
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build release commit
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -euo pipefail
+          case "$TAG" in
+            ''|*[!A-Za-z0-9._-]*) echo "::error::Unsupported tag name: '$TAG'"; exit 1 ;;
+          esac
+          git checkout --quiet --detach "refs/tags/$TAG"
+
+          # Fill in the version: <!-- version --> marks its place in each footer.
+          { grep -rlF --include='*.html' '<!-- version -->' public || true; } \
+            | xargs -r sed -i "s|<!-- version -->|<span class=\"version\">$TAG</span>|"
+          git add public
+          tree=$(git write-tree)
+
+          # Parents: the previous release commit (so Blossom can fast-forward,
+          # also to an older tag) and the tagged commit itself.
+          parents=()
+          if git rev-parse --quiet --verify refs/remotes/origin/release >/dev/null; then
+            parents+=(-p refs/remotes/origin/release)
+          fi
+          parents+=(-p "refs/tags/$TAG^{commit}")
+
+          export GIT_AUTHOR_NAME='github-actions[bot]' GIT_COMMITTER_NAME='github-actions[bot]'
+          export GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com'
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit=$(git commit-tree "$tree" "${parents[@]}" -m "Release $TAG")
+          git push origin "$commit:refs/heads/release"
+          echo "Published $TAG as $commit on release" >> "$GITHUB_STEP_SUMMARY"

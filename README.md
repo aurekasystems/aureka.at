@@ -17,8 +17,10 @@ and open http://localhost:8000.
 ## Operation
 The website runs on Blossom (`/srv/sites/aureka.at`) behind the shared Caddy
 proxy. Setup, updates and rollback are described in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). A push to `main` is live after about
-a minute: a systemd timer on Blossom pulls it.
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Merging to `main` does not deploy.
+Publishing a GitHub release does: a workflow puts the release on the branch
+`release` with its tag shown in the footer, and a systemd timer on Blossom
+pulls that branch within about a minute.
 
 ## Notes
 - The site content is German. An English version (EN/DE) is planned.
