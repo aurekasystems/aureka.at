@@ -212,8 +212,7 @@ cached for a year as `immutable`; a new release changes the URL. Everything
 else, the pages included, is sent with `Cache-Control: no-cache`, so browsers
 revalidate it on each use. Add `?v=__SITE_VERSION__` to every new asset
 reference in HTML or CSS; the workflow `Check` makes sure each page loads its
-stylesheet that way. The 301 for `/products/photo` is cached for a day only,
-so it can still be changed later.
+stylesheet that way.
 
 ## Manual steps and rollback
 
