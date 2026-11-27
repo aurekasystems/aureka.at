@@ -24,6 +24,23 @@ jobs:
           test -n "$image"
           docker run --rm -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" "$image" \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Check redirects and cache headers
+        run: |
+          image=$(sed -n 's/^ *image: *\(caddy:.*\)$/\1/p' compose.yaml | head -n 1)
+          docker run -d --name website -p 8080:80 \
+            -v "$PWD/public:/srv/site:ro" -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" "$image"
+          for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 0.5; done
+          expect() { # <path> <status> <header line>
+            out=$(curl -sI "http://127.0.0.1:8080$1" | tr -d '\r')
+            grep -q "^HTTP/1.1 $2 " <<< "$out" && grep -qiF "$3" <<< "$out" \
+              || { echo "::error::$1: expected $2 and '$3'"; echo "$out"; exit 1; }
+          }
+          expect /products/photo 301 'location: /products/photos'
+          expect /products/photo 301 'cache-control: max-age=86400'
+          expect / 200 'cache-control: no-cache'
+          expect /impressum 200 'cache-control: no-cache'
+          expect '/assets/style.css?v=x' 200 'cache-control: public, max-age=31536000, immutable'
+          docker rm -f website > /dev/null
       - name: Check the version placeholders
         run: |
           # The release workflow replaces __SITE_VERSION__ in HTML and CSS only.
