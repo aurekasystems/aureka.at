@@ -16,10 +16,23 @@
 		-Server
 	}
 
-	# Short form of the product URL
-	redir /products/photo /products/photos 301
+	# Short form of the product URL. Browsers keep this 301 for a day only,
+	# so it can still be changed or removed later.
+	handle /products/photo {
+		header Cache-Control "max-age=86400"
+		redir /products/photos 301
+	}
 
-	# /impressum also serves impressum.html
-	try_files {path} {path}.html
-	file_server
+	handle {
+		# Asset URLs carry the release as ?v=<tag> and never change. Browsers
+		# check everything else, the pages included, on each use.
+		@versioned query v=*
+		header @versioned Cache-Control "public, max-age=31536000, immutable"
+		@unversioned not query v=*
+		header @unversioned Cache-Control "no-cache"
+
+		# /impressum also serves impressum.html
+		try_files {path} {path}.html
+		file_server
+	}
 }
