@@ -52,3 +52,8 @@ jobs:
             grep -qF 'style.css?v=__SITE_VERSION__"' "$page" \
               || { echo "::error file=$page::style.css without ?v=__SITE_VERSION__"; exit 1; }
           done
+          # In CSS the placeholder belongs only in url(...). Anywhere else, such
+          # as a selector, the release would change it too.
+          if grep -rnF --include='*.css' '__SITE_VERSION__' public | grep -vE 'url\("[^"]*\?v=__SITE_VERSION__"\)'; then
+            echo "::error::__SITE_VERSION__ in CSS outside url(); the release replaces it there too"; exit 1
+          fi
