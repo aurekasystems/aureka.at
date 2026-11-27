@@ -39,9 +39,11 @@ jobs:
           esac
           git checkout --quiet --detach "refs/tags/$TAG"
 
-          # Fill in the version: <!-- version --> marks its place in each footer.
+          # Fill in the version: <!-- version --> marks its place at the start
+          # of each footer. It links to this release's page on GitHub.
+          url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG"
           { grep -rlF --include='*.html' '<!-- version -->' public || true; } \
-            | xargs -r sed -i "s|<!-- version -->|<span class=\"version\">$TAG</span>|"
+            | xargs -r sed -i "s|<!-- version -->|<span class=\"version\"><a href=\"$url\">$TAG</a></span>|"
           git add public
           tree=$(git write-tree)
 
