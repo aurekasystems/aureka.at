@@ -24,7 +24,7 @@ jobs:
           test -n "$image"
           docker run --rm -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" "$image" \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-      - name: Check redirects and cache headers
+      - name: Check cache headers
         run: |
           image=$(sed -n 's/^ *image: *\(caddy:.*\)$/\1/p' compose.yaml | head -n 1)
           docker run -d --name website -p 8080:80 \
@@ -35,8 +35,8 @@ jobs:
             grep -q "^HTTP/1.1 $2 " <<< "$out" && grep -qiF "$3" <<< "$out" \
               || { echo "::error::$1: expected $2 and '$3'"; echo "$out"; exit 1; }
           }
-          expect /products/photo 301 'location: /products/photos'
-          expect /products/photo 301 'cache-control: max-age=86400'
+          expect /products/photos 200 'cache-control: no-cache'
+          expect /products/photo 404 'cache-control: no-cache'
           expect / 200 'cache-control: no-cache'
           expect /impressum 200 'cache-control: no-cache'
           expect '/assets/style.css?v=x' 200 'cache-control: public, max-age=31536000, immutable'
