@@ -151,8 +151,8 @@ Only published GitHub releases go live; merging to `main` does not deploy.
    (letters, digits, `.`, `_`, `-`). Pre-releases are not deployed.
 3. The workflow `Release` (`.github/workflows/release.yml`) commits the tagged
    files to the branch `release`, with the tag filled in where the footer of
-   each page has `<!-- version -->`. Each release commit has the previous one
-   as a parent, so the branch only ever fast-forwards.
+   each page has `<!-- version -->`, as a link to the release on GitHub. Each release
+   commit has the previous one as a parent, so the branch only ever fast-forwards.
 4. Blossom pulls `release`: the timer `site-pull@aureka.at.timer` runs
    `git pull --ff-only` in `/srv/sites/aureka.at` as `mjs` every minute. Since
    the container serves `public/` straight from the checkout, the release is
