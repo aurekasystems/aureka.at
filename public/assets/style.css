@@ -43,8 +43,9 @@ h2 { font-size: clamp(2rem, 3.5vw, 2.8rem); line-height: 1.2; letter-spacing: -.
 .footer a { text-decoration: none; }
 .version::after { content: "·"; margin-inline: .5em; }
 .version { opacity: .7; font-variant-numeric: tabular-nums; }
-/* Unreleased files (local preview) still carry the placeholder. */
-.version:has(a[href$="/__SITE_VERSION__"]) { display: none; }
+/* Unreleased files (local preview) still carry the placeholder. The selector
+   leaves out its first "_", so the release workflow does not replace it. */
+.version:has(a[href$="_SITE_VERSION__"]) { display: none; }
 .footer a:hover { text-decoration: underline; }
 .legal > * { max-width: 760px; }
 .legal { padding-block: clamp(48px, 7vw, 96px) 88px; }
