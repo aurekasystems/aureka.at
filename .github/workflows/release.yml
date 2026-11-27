@@ -1,7 +1,7 @@
 # Publishes a GitHub release to the `release` branch, which Blossom pulls
 # (docs/DEPLOYMENT.md, section 6). The branch holds the release's files with
-# the release tag filled into the footer of every page. Pushes to `main` are
-# no longer deployed.
+# the release tag set as the site version (footer and asset URLs). Pushes to
+# `main` are not deployed.
 name: Release
 
 on:
@@ -39,11 +39,18 @@ jobs:
           esac
           git checkout --quiet --detach "refs/tags/$TAG"
 
-          # Fill in the version: <!-- version --> marks its place at the start
-          # of each footer. It links to this release's page on GitHub.
+          # Set the version: the pages and the stylesheet use __SITE_VERSION__
+          # in the footer and in asset URLs (?v=), so browsers load new assets
+          # after each release.
+          { grep -rlF --include='*.html' --include='*.css' '__SITE_VERSION__' public || true; } \
+            | xargs -r sed -i "s/__SITE_VERSION__/$TAG/g"
+          # Releases up to v1.0.2 marked the footer with <!-- version --> instead.
           url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG"
           { grep -rlF --include='*.html' '<!-- version -->' public || true; } \
             | xargs -r sed -i "s|<!-- version -->|<span class=\"version\"><a href=\"$url\">$TAG</a></span>|"
+          if grep -rqF '__SITE_VERSION__' public; then
+            echo "::error::__SITE_VERSION__ is left in public/"; exit 1
+          fi
           git add public
           tree=$(git write-tree)
 
