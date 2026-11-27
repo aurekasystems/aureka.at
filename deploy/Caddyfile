@@ -20,7 +20,8 @@
 	# so it can still be changed or removed later.
 	handle /products/photo {
 		header Cache-Control "max-age=86400"
-		redir /products/photos 301
+		# The * keeps Caddy from reading /products/photos as a matcher.
+		redir * /products/photos 301
 	}
 
 	handle {
