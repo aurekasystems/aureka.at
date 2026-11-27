@@ -150,9 +150,10 @@ Only published GitHub releases go live; merging to `main` does not deploy.
 2. Publish a release on GitHub with a new tag on `main`, e.g. `v1.4.0`
    (letters, digits, `.`, `_`, `-`). Pre-releases are not deployed.
 3. The workflow `Release` (`.github/workflows/release.yml`) commits the tagged
-   files to the branch `release`, with the tag filled in where the footer of
-   each page has `<!-- version -->`, as a link to the release on GitHub. Each release
-   commit has the previous one as a parent, so the branch only ever fast-forwards.
+   files to the branch `release`, with `__SITE_VERSION__` replaced by the tag
+   in every HTML and CSS file: in the footer, as a link to the release on
+   GitHub, and in asset URLs (`style.css?v=<tag>`). Each release commit has the
+   previous one as a parent, so the branch only ever fast-forwards.
 4. Blossom pulls `release`: the timer `site-pull@aureka.at.timer` runs
    `git pull --ff-only` in `/srv/sites/aureka.at` as `mjs` every minute. Since
    the container serves `public/` straight from the checkout, the release is
@@ -205,6 +206,14 @@ sudo journalctl -u site-pull@aureka.at.service --since today | grep -E 'deployed
 
 After changing the units in `deploy/blossom/systemd/`, repeat the
 installation (`install`, `daemon-reload`).
+
+Caching (`deploy/Caddyfile`): asset URLs with `?v=` never change and are
+cached for a year as `immutable`; a new release changes the URL. Everything
+else, the pages included, is sent with `Cache-Control: no-cache`, so browsers
+revalidate it on each use. Add `?v=__SITE_VERSION__` to every new asset
+reference in HTML or CSS; the workflow `Check` makes sure each page loads its
+stylesheet that way. The 301 for `/products/photo` is cached for a day only,
+so it can still be changed later.
 
 ## Manual steps and rollback
 

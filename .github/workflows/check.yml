@@ -1,0 +1,37 @@
+# Checks pull requests and `main`: the Caddyfile is valid, and every
+# __SITE_VERSION__ placeholder sits where the release workflow replaces it.
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate the Caddyfile
+        run: |
+          image=$(sed -n 's/^ *image: *\(caddy:.*\)$/\1/p' compose.yaml | head -n 1)
+          test -n "$image"
+          docker run --rm -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" "$image" \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Check the version placeholders
+        run: |
+          # The release workflow replaces __SITE_VERSION__ in HTML and CSS only.
+          if grep -rlF '__SITE_VERSION__' public | grep -vE '\.(html|css)$'; then
+            echo "::error::__SITE_VERSION__ outside HTML or CSS is never replaced"; exit 1
+          fi
+          # Every page loads its stylesheet with the version.
+          for page in $(find public -name '*.html'); do
+            grep -qF 'style.css?v=__SITE_VERSION__"' "$page" \
+              || { echo "::error file=$page::style.css without ?v=__SITE_VERSION__"; exit 1; }
+          done

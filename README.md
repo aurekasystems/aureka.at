@@ -19,8 +19,11 @@ The website runs on Blossom (`/srv/sites/aureka.at`) behind the shared Caddy
 proxy. Setup, updates and rollback are described in
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Merging to `main` does not deploy.
 Publishing a GitHub release does: a workflow puts the release on the branch
-`release` with its tag shown in the footer, and a systemd timer on Blossom
-pulls that branch within about a minute.
+`release` with its tag as the site version, and a systemd timer on Blossom
+pulls that branch within about a minute. In `public/`, `__SITE_VERSION__`
+stands for that version: in the footer and in asset URLs
+(`assets/style.css?v=__SITE_VERSION__`), so browsers load new assets after
+each release. The local preview hides the unreleased version.
 
 ## Notes
 - The site content is German. An English version (EN/DE) is planned.
